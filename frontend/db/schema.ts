@@ -1,13 +1,14 @@
-import { pgTable, serial, text, timestamp, varchar, integer, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, integer, primaryKey } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
 import type { AdapterAccount } from "@auth/core/adapters"
 
 export const users = pgTable("users", {
   id: text("id").notNull().primaryKey(),
   name: text("name"),
-  email: text("email").notNull(),
+  email: text("email").notNull().unique(),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
+  hashedPassword: text("hashed_password"),
 })
 
 export const accounts = pgTable(
@@ -52,26 +53,9 @@ export const verificationTokens = pgTable(
   }),
 )
 
-export const events = pgTable("events", {
-  id: serial("id").primaryKey(),
-  title: varchar("title", { length: 255 }).notNull(),
-  description: text("description"),
-  date: timestamp("date").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id),
-})
-
+// Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  events: many(events),
-}))
-
-export const eventsRelations = relations(events, ({ one }) => ({
-  user: one(users, {
-    fields: [events.userId],
-    references: [users.id],
-  }),
+  accounts: many(accounts),
+  sessions: many(sessions),
 }))
 
